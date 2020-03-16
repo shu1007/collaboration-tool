@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<script defer src="index.js"></script>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>DataCannelTest</title>
+  </head>
+  <body>
+    DataChannelTest<br />
+    <button type="button" onclick="connect();">Connect</button>
+    <button type="button" onclick="hangUp();">Hang Up</button>
+    <div>
+      <p>
+        text:<br />
+        <textarea
+          id="text_sync"
+          rows="5"
+          cols="60"
+          onchange="sendText()"
+        ></textarea>
+      </p>
+    </div>
+    <p>
+      SDP to send:<br />
+      <textarea id="text_for_send_sdp" rows="5" cols="60" readonly="readonly">
+SDP to send
+</textarea
+      >
+    </p>
+    <p>
+      SDP to receive:&nbsp;
+      <button type="button" onclick="onSdpText();">Receive remote SDP</button
+      ><br />
+      <textarea id="text_for_receive_sdp" rows="5" cols="60"></textarea>
+    </p>
+  </body>
+</html>
