@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css" />
 <script defer src="index.js"></script>
 <html>
   <head>
@@ -9,15 +10,11 @@
     DataChannelTest<br />
     <button type="button" onclick="connect();">Connect</button>
     <button type="button" onclick="hangUp();">Hang Up</button>
+    <p id="isConnect">No connection...</p>
     <div>
       <p>
         text:<br />
-        <textarea
-          id="text_sync"
-          rows="5"
-          cols="60"
-          onchange="sendText()"
-        ></textarea>
+        <textarea id="text_sync" rows="5" cols="60"></textarea>
       </p>
     </div>
     <p>

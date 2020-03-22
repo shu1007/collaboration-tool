@@ -1,3 +1,6 @@
+const CodeMirror = require("codemirror");
+const ot = require("ot-es.js");
+
 let peerConnection = null;
 let textForSendSdp = document.getElementById("text_for_send_sdp");
 let textToReceiveSdp = document.getElementById("text_for_receive_sdp");
@@ -7,6 +10,35 @@ const dataChannelOptions = {
   ordered: false, // 順序を保証しない
   maxRetransmitTime: 3000 // ミリ秒
 };
+
+const textarea = document.getElementById("text_sync");
+const cm = CodeMirror.fromTextArea(textarea, {
+  lineNumbers: true,
+  lineWrapping: true,
+  mode: "markdown"
+});
+cm.setValue("aaa\naaa\naaa");
+cm.setOption("readOnly", true);
+let ignoreChange = false;
+const changeAction = (editor, change) => {
+  if (!ignoreChange) {
+    const text = editor.getValue();
+
+    const ope = ot.toOperation(
+      {
+        from: change.from,
+        to: change.to,
+        text: change.text.join("\n"),
+        deleteLength: change.text == "" ? change.removed.join("\n").length : 0
+      },
+      text
+    );
+    const json = JSON.stringify(ope);
+    console.log(`operation json\n${json}\n******************`);
+    sendMessage(json);
+  }
+};
+cm.on("change", changeAction);
 
 // --- prefix -----
 RTCPeerConnection =
@@ -45,11 +77,9 @@ function sendSdp(sessionDescription) {
   textForSendSdp.focus();
   textForSendSdp.select();
 }
-
-function sendText() {
+function sendMessage(message) {
   if (dataChannel) {
-    console.log("send text.");
-    dataChannel.send(syncText.value);
+    dataChannel.send(message);
   }
 }
 
@@ -184,6 +214,7 @@ function hangUp() {
     syncText.value = "";
     textForSendSdp.value = "";
     textToReceiveSdp.value = "";
+    document.getElementById("isConnect").value = "No connection...";
   } else {
     console.warn("peer NOT exist.");
   }
@@ -194,16 +225,32 @@ function initDataChannel() {
     console.log("Data Channel Error:", error);
   };
   dataChannel.onmessage = function(event) {
-    console.log("Got Data Channel Message:");
-    syncText.value = event.data;
+    applyCodeMirror(ot.TextOperation.fromJSON(JSON.parse(event.data)));
   };
 
   dataChannel.onopen = function() {
     console.log("Data Channel open");
-    // dataChannel.send("Hello World!");
+    document.getElementById("isConnect").innerHTML = "Connected!";
+    cm.setOption("readOnly", false);
   };
 
   dataChannel.onclose = function() {
     console.log("The Data Channel is Closed");
+    document.getElementById("isConnect").innerHTML = "No connection...";
+    cm.setOption("readOnly", true);
   };
+}
+
+function applyCodeMirror(operation) {
+  const value = cm.getValue();
+  const changes = ot.fromOperation(operation, value);
+  ignoreChange = true;
+  changes.forEach(c => {
+    if (c.deleteLength == 0) {
+      cm.replaceRange(c.text, c.from, null, "ignoreHistory");
+    } else {
+      cm.replaceRange("", c.from, c.to, "ignoreHistory");
+    }
+  });
+  ignoreChange = false;
 }
